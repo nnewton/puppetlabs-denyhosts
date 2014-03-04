@@ -9,7 +9,9 @@
 # argument
 #
 # Redhat or Fedora Core:
-#SECURE_LOG = /var/log/secure
+<% if @osfamily == 'RedHat' %>
+SECURE_LOG = /var/log/secure
+<% end %>
 #
 # Mandrake, FreeBSD or OpenBSD: 
 #SECURE_LOG = /var/log/auth.log
@@ -25,7 +27,10 @@
 #SECURE_LOG=/private/var/log/system.log
 #
 # Debian:
+<% if @osfamily == 'Debian' %>
 SECURE_LOG = /var/log/auth.log
+<% end %>
+
 ########################################################################
 
 ########################################################################
@@ -57,13 +62,18 @@ HOSTS_DENY = /etc/hosts.deny
 #            'y' = years
 #
 # never purge:
-PURGE_DENY = 
+#PURGE_DENY = 
 #
 # purge entries older than 1 week
 #PURGE_DENY = 1w
 #
 # purge entries older than 5 days
 #PURGE_DENY = 5d
+#
+# For the default Fedora Extras install, we want timestamping but no
+# expiration (at least by default) so this is deliberately set high.
+# Adjust to taste.
+PURGE_DENY = 4w
 #######################################################################
 
 #######################################################################
@@ -166,7 +176,7 @@ WORK_DIR = /var/lib/denyhosts
 # from allowed-hosts will not be reported.  All suspicious logins from 
 # ip addresses that are not in allowed-hosts will always be reported.
 #
-SUSPICIOUS_LOGIN_REPORT_ALLOWED_HOSTS=YES
+SUSPICIOUS_LOGIN_REPORT_ALLOWED_HOSTS=NO
 ######################################################################
 
 ######################################################################
@@ -194,10 +204,14 @@ HOSTNAME_LOOKUP=YES
 # running at a time.
 #
 # Redhat/Fedora:
-#LOCK_FILE = /var/lock/subsys/denyhosts
+<% if @osfamily == 'RedHat' %>
+LOCK_FILE = /var/lock/subsys/denyhosts
+<% end %>
 #
 # Debian
+<% if @osfamily == 'Debian' %>
 LOCK_FILE = /var/run/denyhosts.pid
+<% end %>
 #
 # Misc
 #LOCK_FILE = /tmp/denyhosts.lock
@@ -218,7 +232,7 @@ LOCK_FILE = /var/run/denyhosts.pid
 # Multiple email addresses can be delimited by a comma, eg:
 # ADMIN_EMAIL = foo@bar.com, bar@foo.com, etc@foobar.com
 #
-ADMIN_EMAIL = <%= adminemail %>
+ADMIN_EMAIL = <%= @adminemail %>
 #
 #######################################################################
 
@@ -249,7 +263,7 @@ SMTP_PORT = 25
 # SMTP_FROM: you can specify the "From:" address in messages sent
 # from DenyHosts when it reports thwarted abuse attempts
 #
-SMTP_FROM = DenyHosts <nobody@<%= fqdn %>>
+SMTP_FROM = DenyHosts <nobody@<%= @fqdn %>>
 #
 #######################################################################
 
@@ -257,7 +271,7 @@ SMTP_FROM = DenyHosts <nobody@<%= fqdn %>>
 #
 # SMTP_SUBJECT: you can specify the "Subject:" of messages sent
 # by DenyHosts when it reports thwarted abuse attempts
-SMTP_SUBJECT = DenyHosts Report
+SMTP_SUBJECT = DenyHosts Report from $[HOSTNAME]
 #
 ######################################################################
 
@@ -388,7 +402,7 @@ AGE_RESET_INVALID=10d
 # PLUGIN_DENY: If set, this value should point to an executable
 # program that will be invoked when a host is added to the
 # HOSTS_DENY file.  This executable will be passed the host
-# that will be added as its only argument.
+# that will be added as it's only argument.
 #
 #PLUGIN_DENY=/usr/bin/true
 #
@@ -400,9 +414,16 @@ AGE_RESET_INVALID=10d
 # PLUGIN_PURGE: If set, this value should point to an executable
 # program that will be invoked when a host is removed from the
 # HOSTS_DENY file.  This executable will be passed the host
-# that is to be purged as its only argument.
+# that is to be purged as it's only argument.
 #
 #PLUGIN_PURGE=/usr/bin/true
+#
+# The following plugin will restore the file contexts on /etc/hosts.deny after
+# denyhosts purges old entries.  This prevents breakage when selinux is set to
+# enforcing mode, but still has a small window where the context is set
+# incorrectly.  The correct place to fix this is in the selinux policy.
+#
+#PLUGIN_PURGE=/usr/share/denyhosts/plugins/restorecon.sh
 #
 ######################################################################
 
@@ -431,7 +452,7 @@ AGE_RESET_INVALID=10d
 #######################################################################
 #
 # DAEMON_LOG: when DenyHosts is run in daemon mode (--daemon flag)
-# this is the logfile that DenyHosts uses to report its status.
+# this is the logfile that DenyHosts uses to report it's status.
 # To disable logging, leave blank.  (default is: /var/log/denyhosts)
 #
 DAEMON_LOG = /var/log/denyhosts
@@ -532,7 +553,9 @@ DAEMON_PURGE = 1h
 # To disable synchronization (the default), do nothing. 
 #
 # To enable synchronization, you must uncomment the following line:
-SYNC_SERVER = http://xmlrpc.denyhosts.net:9911
+#
+# NOTE: Please read README.Fedora before enabling sync
+#SYNC_SERVER = http://xmlrpc.denyhosts.net:9911
 #
 #######################################################################
 
@@ -553,7 +576,7 @@ SYNC_SERVER = http://xmlrpc.denyhosts.net:9911
 # been uncommented.
 # The default is SYNC_UPLOAD = yes
 #
-SYNC_UPLOAD = no
+#SYNC_UPLOAD = no
 #SYNC_UPLOAD = yes
 #
 #######################################################################
@@ -597,7 +620,7 @@ SYNC_UPLOAD = no
 # to this resiliency period or greater.
 #
 # Resiliency is defined as the timespan between a hackers first known 
-# attack and its most recent attack.  Example:
+# attack and it's most recent attack.  Example:
 # 
 # If the centralized   denyhosts.net server records an attack at 2 PM 
 # and then again at 5 PM, specifying a SYNC_DOWNLOAD_RESILIENCY = 4h 
